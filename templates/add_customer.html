@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add Customer | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Add Customer
+{% endblock %}
+
+{% block content %}
+
+<div class="form-card">
+
+    <form method="POST">
+
+        <div class="form-group">
+            <label>Customer Name</label>
+
+            <input
+                type="text"
+                name="customer_name"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Phone</label>
+
+            <input
+                type="text"
+                name="phone"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+
+            <input
+                type="email"
+                name="email"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Wallet Balance</label>
+
+            <input
+                type="number"
+                name="wallet_balance"
+                step="0.01"
+                min="0"
+                value="0"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Reward Points</label>
+
+            <input
+                type="number"
+                name="reward_points"
+                min="0"
+                value="0"
+            >
+        </div>
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                class="primary-button"
+            >
+                Save Customer
+            </button>
+
+            <a
+                href="{{ url_for('customers') }}"
+                class="secondary-button"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

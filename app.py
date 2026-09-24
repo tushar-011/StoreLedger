@@ -432,6 +432,170 @@ def restock_product(product_id):
         product=product
     )
 
+@app.route("/customers")
+def customers():
+
+    search = request.args.get("search", "")
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM customers
+        WHERE customer_name LIKE %s
+           OR phone LIKE %s
+           OR email LIKE %s
+        ORDER BY customer_id DESC
+        """,
+        (
+            f"%{search}%",
+            f"%{search}%",
+            f"%{search}%"
+        )
+    )
+
+    customer_data = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "customers.html",
+        customers=customer_data,
+        search=search
+    )
+
+@app.route("/customers/add", methods=["GET", "POST"])
+def add_customer():
+
+    if request.method == "POST":
+
+        customer_name = request.form["customer_name"]
+        phone = request.form.get("phone") or None
+        email = request.form.get("email") or None
+        wallet_balance = request.form.get("wallet_balance") or 0
+        reward_points = request.form.get("reward_points") or 0
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO customers
+            (
+                customer_name,
+                phone,
+                email,
+                wallet_balance,
+                reward_points
+            )
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (
+                customer_name,
+                phone,
+                email,
+                wallet_balance,
+                reward_points
+            )
+        )
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return redirect(url_for("customers"))
+
+    return render_template("add_customer.html")
+
+@app.route("/customers/edit/<int:customer_id>", methods=["GET", "POST"])
+def edit_customer(customer_id):
+
+    connection = get_db_connection()
+
+    if request.method == "POST":
+
+        customer_name = request.form["customer_name"]
+        phone = request.form.get("phone") or None
+        email = request.form.get("email") or None
+        wallet_balance = request.form.get("wallet_balance") or 0
+        reward_points = request.form.get("reward_points") or 0
+
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE customers
+            SET
+                customer_name = %s,
+                phone = %s,
+                email = %s,
+                wallet_balance = %s,
+                reward_points = %s
+            WHERE customer_id = %s
+            """,
+            (
+                customer_name,
+                phone,
+                email,
+                wallet_balance,
+                reward_points,
+                customer_id
+            )
+        )
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return redirect(url_for("customers"))
+
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM customers
+        WHERE customer_id = %s
+        """,
+        (customer_id,)
+    )
+
+    customer = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "edit_customer.html",
+        customer=customer
+    )
+
+@app.route("/customers/delete/<int:customer_id>", methods=["POST"])
+def delete_customer(customer_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM customers
+        WHERE customer_id = %s
+        """,
+        (customer_id,)
+    )
+
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return redirect(url_for("customers"))
+
     
 if __name__ == "__main__":
     app.run(debug=True)
