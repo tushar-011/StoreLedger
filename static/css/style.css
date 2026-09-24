@@ -634,3 +634,48 @@ button.primary-button {
     }
 
 }
+
+.expired-row {
+    background: #fef2f2;
+}
+
+.expiry-critical-row {
+    background: #fff7ed;
+}
+
+.expired-badge {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 12px;
+
+    background: #fee2e2;
+    color: #991b1b;
+
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.expiry-critical-badge {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 12px;
+
+    background: #ffedd5;
+    color: #9a3412;
+
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.expiry-warning-badge {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 12px;
+
+    background: #fef3c7;
+    color: #92400e;
+
+    font-size: 12px;
+    font-weight: bold;
+}
+

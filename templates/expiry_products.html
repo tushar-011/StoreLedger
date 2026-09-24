@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}
+Expiry Management | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Expiry Management
+{% endblock %}
+
+{% block content %}
+
+<div class="inventory-summary">
+
+    <div class="dashboard-card">
+        <h3>Expired</h3>
+        <p>{{ expired_count }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Critical (7 Days)</h3>
+        <p>{{ critical_count }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Expiring in 30 Days</h3>
+        <p>{{ expiring_count }}</p>
+    </div>
+
+</div>
+
+
+<div class="table-card">
+
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Expiry Date</th>
+                <th>Days Remaining</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for product in products %}
+
+            <tr class="
+                {% if product.expiry_status == 'Expired' %}
+                    expired-row
+                {% elif product.expiry_status == 'Critical' %}
+                    expiry-critical-row
+                {% endif %}
+            ">
+
+                <td>
+                    {{ product.product_id }}
+                </td>
+
+                <td>
+                    {{ product.product_name }}
+                </td>
+
+                <td>
+                    {{ product.category_name or "Uncategorized" }}
+                </td>
+
+                <td>
+                    {{ product.stock }}
+                </td>
+
+                <td>
+                    {{ product.expiry_date }}
+                </td>
+
+                <td>
+
+                    {% if product.days_remaining < 0 %}
+
+                        Expired
+                        {{ product.days_remaining | abs }}
+                        day(s) ago
+
+                    {% else %}
+
+                        {{ product.days_remaining }}
+                        day(s)
+
+                    {% endif %}
+
+                </td>
+
+                <td>
+
+                    {% if product.expiry_status == "Expired" %}
+
+                        <span class="expired-badge">
+                            Expired
+                        </span>
+
+                    {% elif product.expiry_status == "Critical" %}
+
+                        <span class="expiry-critical-badge">
+                            Critical
+                        </span>
+
+                    {% elif product.expiry_status == "Expiring Soon" %}
+
+                        <span class="expiry-warning-badge">
+                            Expiring Soon
+                        </span>
+
+                    {% else %}
+
+                        <span class="stock-ok-badge">
+                            Safe
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td colspan="7" class="empty-table">
+                    No products with expiry dates found.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

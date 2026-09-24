@@ -85,14 +85,6 @@ def dashboard():
 
     cursor.execute(
         """
-        SELECT COUNT(*) AS total
-        FROM low_stock_view
-        """
-    )
-    low_stock = cursor.fetchone()["total"]
-
-    cursor.execute(
-        """
         SELECT
             total_revenue,
             total_orders
@@ -110,8 +102,25 @@ def dashboard():
         today_revenue = 0
         today_orders = 0
 
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM expiry_products_view
+        WHERE expiry_status IN (
+            'Expired',
+            'Critical',
+            'Expiring Soon'
+        )
+        """
+    )
+
+    expiry_alerts = cursor.fetchone()["total"]
+
+
     cursor.close()
     connection.close()
+
 
     return render_template(
         "dashboard.html",
@@ -120,7 +129,8 @@ def dashboard():
         total_orders=total_orders,
         low_stock=low_stock,
         today_revenue=today_revenue,
-        today_orders=today_orders
+        today_orders=today_orders,
+        expiry_alerts=expiry_alerts
     )
     
 @app.route("/products/add", methods=["GET", "POST"])
@@ -642,7 +652,6 @@ def load_billing_page(error=None):
             dictionary=True
         )
 
-
     cursor.execute(
         """
         SELECT
@@ -650,14 +659,16 @@ def load_billing_page(error=None):
             product_name,
             price,
             stock,
-            tax_rate
+            tax_rate,
+            expiry_date
         FROM products
+        WHERE expiry_date IS NULL
+        OR expiry_date >= CURDATE()
         ORDER BY product_name
         """
     )
 
     products = cursor.fetchall()
-
 
     cursor.execute(
         """
@@ -1602,6 +1613,63 @@ def reports():
         daily_sales=daily_sales,
         top_products=top_products,
         payment_summary=payment_summary
+    )
+    
+@app.route("/inventory/expiry")
+def expiry_products():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM expiry_products_view
+        ORDER BY expiry_date ASC
+        """
+    )
+
+    products = cursor.fetchall()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM expiry_products_view
+        WHERE expiry_status = 'Expired'
+        """
+    )
+
+    expired_count = cursor.fetchone()["total"]
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM expiry_products_view
+        WHERE expiry_status = 'Critical'
+        """
+    )
+
+    critical_count = cursor.fetchone()["total"]
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM expiry_products_view
+        WHERE expiry_status = 'Expiring Soon'
+        """
+    )
+
+    expiring_count = cursor.fetchone()["total"]
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "expiry_products.html",
+        products=products,
+        expired_count=expired_count,
+        critical_count=critical_count,
+        expiring_count=expiring_count
     )
     
 
