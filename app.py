@@ -85,6 +85,15 @@ def dashboard():
 
     cursor.execute(
         """
+        SELECT COUNT(*) AS total
+        FROM low_stock_view
+        """
+    )
+
+    low_stock_count = cursor.fetchone()["total"]
+
+    cursor.execute(
+        """
         SELECT
             total_revenue,
             total_orders
@@ -127,7 +136,7 @@ def dashboard():
         total_products=total_products,
         total_customers=total_customers,
         total_orders=total_orders,
-        low_stock=low_stock,
+        low_stock_count=low_stock_count,
         today_revenue=today_revenue,
         today_orders=today_orders,
         expiry_alerts=expiry_alerts
@@ -143,6 +152,8 @@ def add_product():
 
         product_name = request.form["product_name"]
         category_id = request.form.get("category_id") or None
+        supplier_id = request.form.get("supplier_id") or None
+
         price = request.form["price"]
         stock = request.form["stock"]
         minimum_stock = request.form["minimum_stock"]
@@ -157,17 +168,29 @@ def add_product():
             (
                 product_name,
                 category_id,
+                supplier_id,
                 price,
                 stock,
                 minimum_stock,
                 tax_rate,
                 expiry_date
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES
+            (
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s
+            )
             """,
             (
                 product_name,
                 category_id,
+                supplier_id,
                 price,
                 stock,
                 minimum_stock,
@@ -182,7 +205,9 @@ def add_product():
         cursor.close()
         connection.close()
 
-        return redirect(url_for("products"))
+        return redirect(
+            url_for("products")
+        )
 
     cursor.execute(
         """
@@ -194,12 +219,23 @@ def add_product():
 
     categories = cursor.fetchall()
 
+    cursor.execute(
+        """
+        SELECT *
+        FROM suppliers
+        ORDER BY supplier_name
+        """
+    )
+
+    suppliers = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
     return render_template(
         "add_product.html",
-        categories=categories
+        categories=categories,
+        suppliers=suppliers
     )
 
 @app.route("/products/edit/<int:product_id>", methods=["GET", "POST"])
@@ -211,6 +247,8 @@ def edit_product(product_id):
 
         product_name = request.form["product_name"]
         category_id = request.form.get("category_id") or None
+        supplier_id = request.form.get("supplier_id") or None
+
         price = request.form["price"]
         stock = request.form["stock"]
         minimum_stock = request.form["minimum_stock"]
@@ -225,6 +263,7 @@ def edit_product(product_id):
             SET
                 product_name = %s,
                 category_id = %s,
+                supplier_id = %s,
                 price = %s,
                 stock = %s,
                 minimum_stock = %s,
@@ -235,6 +274,7 @@ def edit_product(product_id):
             (
                 product_name,
                 category_id,
+                supplier_id,
                 price,
                 stock,
                 minimum_stock,
@@ -249,7 +289,9 @@ def edit_product(product_id):
         cursor.close()
         connection.close()
 
-        return redirect(url_for("products"))
+        return redirect(
+            url_for("products")
+        )
 
     cursor = connection.cursor(dictionary=True)
 
@@ -264,6 +306,12 @@ def edit_product(product_id):
 
     product = cursor.fetchone()
 
+    if not product:
+        cursor.close()
+        connection.close()
+
+        return "Product not found.", 404
+
     cursor.execute(
         """
         SELECT *
@@ -274,15 +322,26 @@ def edit_product(product_id):
 
     categories = cursor.fetchall()
 
+    cursor.execute(
+        """
+        SELECT *
+        FROM suppliers
+        ORDER BY supplier_name
+        """
+    )
+
+    suppliers = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
     return render_template(
         "edit_product.html",
         product=product,
-        categories=categories
+        categories=categories,
+        suppliers=suppliers
     )
-
+    
 @app.route("/products/delete/<int:product_id>", methods=["POST"])
 def delete_product(product_id):
 
@@ -1670,6 +1729,173 @@ def expiry_products():
         expired_count=expired_count,
         critical_count=critical_count,
         expiring_count=expiring_count
+    )
+    
+@app.route("/suppliers")
+def suppliers():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM suppliers
+        ORDER BY supplier_id DESC
+        """
+    )
+
+    supplier_data = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "suppliers.html",
+        suppliers=supplier_data
+    )
+    
+@app.route("/suppliers/add", methods=["GET", "POST"])
+def add_supplier():
+
+    if request.method == "POST":
+
+        supplier_name = request.form["supplier_name"]
+        company_name = request.form.get("company_name") or None
+        phone = request.form.get("phone") or None
+        email = request.form.get("email") or None
+        address = request.form.get("address") or None
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO suppliers
+            (
+                supplier_name,
+                company_name,
+                phone,
+                email,
+                address
+            )
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (
+                supplier_name,
+                company_name,
+                phone,
+                email,
+                address
+            )
+        )
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return redirect(
+            url_for("suppliers")
+        )
+
+    return render_template(
+        "add_supplier.html"
+    )
+    
+@app.route(
+    "/suppliers/edit/<int:supplier_id>",
+    methods=["GET", "POST"]
+)
+def edit_supplier(supplier_id):
+
+    connection = get_db_connection()
+
+    if request.method == "POST":
+
+        supplier_name = request.form["supplier_name"]
+        company_name = request.form.get("company_name") or None
+        phone = request.form.get("phone") or None
+        email = request.form.get("email") or None
+        address = request.form.get("address") or None
+
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE suppliers
+            SET
+                supplier_name = %s,
+                company_name = %s,
+                phone = %s,
+                email = %s,
+                address = %s
+            WHERE supplier_id = %s
+            """,
+            (
+                supplier_name,
+                company_name,
+                phone,
+                email,
+                address,
+                supplier_id
+            )
+        )
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return redirect(
+            url_for("suppliers")
+        )
+
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM suppliers
+        WHERE supplier_id = %s
+        """,
+        (supplier_id,)
+    )
+
+    supplier = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "edit_supplier.html",
+        supplier=supplier
+    )
+    
+@app.route(
+    "/suppliers/delete/<int:supplier_id>",
+    methods=["POST"]
+)
+def delete_supplier(supplier_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM suppliers
+        WHERE supplier_id = %s
+        """,
+        (supplier_id,)
+    )
+
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return redirect(
+        url_for("suppliers")
     )
     
 

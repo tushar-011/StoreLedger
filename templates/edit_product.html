@@ -25,6 +25,7 @@ Edit Product
             >
         </div>
 
+
         <div class="form-group">
             <label>Category</label>
 
@@ -39,7 +40,7 @@ Edit Product
                 <option
                     value="{{ category.category_id }}"
                     {% if category.category_id == product.category_id %}
-                    selected
+                        selected
                     {% endif %}
                 >
                     {{ category.category_name }}
@@ -49,6 +50,39 @@ Edit Product
 
             </select>
         </div>
+
+
+        <div class="form-group">
+            <label>Supplier</label>
+
+            <select name="supplier_id" required>
+
+                <option
+                    value=""
+                    disabled
+                    {% if not product.supplier_id %}
+                        selected
+                    {% endif %}
+                >
+                    Select Supplier
+                </option>
+
+                {% for supplier in suppliers %}
+
+                <option
+                    value="{{ supplier.supplier_id }}"
+                    {% if supplier.supplier_id == product.supplier_id %}
+                        selected
+                    {% endif %}
+                >
+                    {{ supplier.supplier_name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+        </div>
+
 
         <div class="form-group">
             <label>Price</label>
@@ -63,6 +97,7 @@ Edit Product
             >
         </div>
 
+
         <div class="form-group">
             <label>Stock</label>
 
@@ -74,6 +109,7 @@ Edit Product
                 required
             >
         </div>
+
 
         <div class="form-group">
             <label>Minimum Stock</label>
@@ -87,6 +123,7 @@ Edit Product
             >
         </div>
 
+
         <div class="form-group">
             <label>Tax Rate (%)</label>
 
@@ -99,6 +136,7 @@ Edit Product
             >
         </div>
 
+
         <div class="form-group">
             <label>Expiry Date</label>
 
@@ -108,6 +146,7 @@ Edit Product
                 value="{{ product.expiry_date or '' }}"
             >
         </div>
+
 
         <div class="form-actions">
 
