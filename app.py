@@ -1177,6 +1177,33 @@ def download_bill(order_id):
         if connection.is_connected():
             connection.close()
 
+@app.route("/audit-logs")
+def audit_logs():
+
+    connection = get_db_connection()
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM audit_log
+        ORDER BY log_id DESC
+        """
+    )
+
+    logs = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "audit_logs.html",
+        logs=logs
+    )
+
 
 if __name__ == "__main__":
     app.run(debug=True)
