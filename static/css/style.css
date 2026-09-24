@@ -411,3 +411,166 @@ button.primary-button {
     }
 }
 
+.billing-layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 25px;
+}
+
+.section-title {
+    margin-bottom: 18px;
+}
+
+.billing-search {
+    width: 100%;
+    padding: 11px;
+    margin-bottom: 18px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+
+    font-size: 15px;
+}
+
+.cart-quantity {
+    width: 65px;
+    padding: 7px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+}
+
+.remove-cart-button {
+    border: none;
+
+    background: #fee2e2;
+    color: #991b1b;
+
+    padding: 7px 10px;
+
+    border-radius: 5px;
+
+    cursor: pointer;
+}
+
+.bill-summary {
+    margin-top: 20px;
+    margin-bottom: 20px;
+
+    padding: 18px;
+
+    background: #f9fafb;
+
+    border-radius: 8px;
+}
+
+.bill-summary div {
+    display: flex;
+    justify-content: space-between;
+
+    margin-bottom: 10px;
+}
+
+.bill-summary .grand-total {
+    border-top: 1px solid #d1d5db;
+
+    padding-top: 12px;
+
+    font-size: 18px;
+}
+
+.generate-bill-button {
+    width: 100%;
+}
+
+.error-message {
+    padding: 14px;
+
+    margin-bottom: 20px;
+
+    background: #fee2e2;
+    color: #991b1b;
+
+    border-radius: 7px;
+}
+
+.invoice-card {
+    background: white;
+
+    padding: 30px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+
+    max-width: 900px;
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+
+    margin-bottom: 30px;
+}
+
+.invoice-customer {
+    margin-bottom: 20px;
+}
+
+.invoice-summary {
+    margin-top: 25px;
+
+    text-align: right;
+}
+
+.invoice-summary p {
+    margin-bottom: 8px;
+}
+
+.invoice-summary h2 {
+    margin-top: 15px;
+}
+
+@media (max-width: 1000px) {
+
+    .billing-layout {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+.invoice-card {
+    background: white;
+    padding: 30px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    max-width: 900px;
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.invoice-customer {
+    margin-bottom: 20px;
+}
+
+.invoice-customer p {
+    margin-bottom: 8px;
+}
+
+.invoice-summary {
+    margin-top: 25px;
+    text-align: right;
+}
+
+.invoice-summary p {
+    margin-bottom: 8px;
+}
+
+.invoice-summary h2 {
+    margin-top: 15px;
+}
+

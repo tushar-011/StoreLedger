@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}
+Invoice | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Invoice #{{ order.order_id }}
+{% endblock %}
+
+{% block content %}
+
+<div class="invoice-card">
+
+    <div class="invoice-header">
+
+        <div>
+            <h2>StoreLedger</h2>
+            <p>Billing & Inventory Management</p>
+        </div>
+
+        <div>
+            <strong>
+                Invoice #{{ order.order_id }}
+            </strong>
+
+            <p>
+                {{ order.order_date }}
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="invoice-customer">
+
+        <p>
+            <strong>Customer:</strong>
+            {{ order.customer_name or "Walk-in Customer" }}
+        </p>
+
+        <p>
+            <strong>Payment Method:</strong>
+            {{ order.payment_method }}
+        </p>
+
+        <p>
+            <strong>Status:</strong>
+            {{ order.status }}
+        </p>
+
+    </div>
+
+
+    <div class="table-card">
+
+        <table class="data-table">
+
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for item in items %}
+
+                <tr>
+
+                    <td>
+                        {{ item.product_name }}
+                    </td>
+
+                    <td>
+                        {{ item.quantity }}
+                    </td>
+
+                    <td>
+                        ₹{{ "%.2f"|format(item.price) }}
+                    </td>
+
+                    <td>
+                        ₹{{ "%.2f"|format(item.price * item.quantity) }}
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td colspan="4" class="empty-table">
+                        No items found for this bill.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <div class="invoice-summary">
+
+        <p>
+            <span>Subtotal:</span>
+
+            <strong>
+                ₹{{ "%.2f"|format(order.subtotal) }}
+            </strong>
+        </p>
+
+        <p>
+            <span>Tax:</span>
+
+            <strong>
+                ₹{{ "%.2f"|format(order.tax) }}
+            </strong>
+        </p>
+
+        <p>
+            <span>Discount:</span>
+
+            <strong>
+                ₹{{ "%.2f"|format(order.discount) }}
+            </strong>
+        </p>
+
+        <h2>
+            Total:
+            ₹{{ "%.2f"|format(order.total_amount) }}
+        </h2>
+
+    </div>
+
+
+<div class="form-actions">
+
+    <a
+        href="{{ url_for('new_bill') }}"
+        class="primary-button"
+    >
+        New Bill
+    </a>
+
+    <a
+        href="{{ url_for('download_bill', order_id=order.order_id) }}"
+        class="secondary-button"
+    >
+        Download TXT
+    </a>
+
+    <a
+        href="{{ url_for('bill_history') }}"
+        class="secondary-button"
+    >
+        Bill History
+    </a>
+
+    <a
+        href="{{ url_for('dashboard') }}"
+        class="secondary-button"
+    >
+        Dashboard
+    </a>
+
+</div>
+
+</div>
+
+{% endblock %}

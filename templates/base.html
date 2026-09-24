@@ -24,12 +24,12 @@
 
             <nav class="nav-menu">
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="#">New Bill</a>
+                <a href="{{ url_for('new_bill') }}">New Bill</a>
                 <a href="{{ url_for('products') }}">Products</a>
                 <a href="{{ url_for('inventory') }}">Inventory</a>
                 <a href="{{ url_for('customers') }}">Customers</a>
                 <a href="#">Transactions</a>
-                <a href="#">Bill History</a>
+                <a href="{{ url_for('bill_history') }}">Bill History</a>
                 <a href="#">Reports</a>
                 <a href="#">Audit Logs</a>
             </nav>

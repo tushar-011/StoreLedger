@@ -1,4 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for
+import json
+from flask import(
+    Flask, 
+    render_template, 
+    request, 
+    redirect, 
+    url_for, 
+    Response
+)
 from db import get_db_connection
 
 
@@ -596,6 +604,568 @@ def delete_customer(customer_id):
 
     return redirect(url_for("customers"))
 
-    
+def load_billing_page(error=None):
+
+    connection = get_db_connection()
+
+    cursor = connection.cursor(
+            dictionary=True
+        )
+
+
+    cursor.execute(
+        """
+        SELECT
+            product_id,
+            product_name,
+            price,
+            stock,
+            tax_rate
+        FROM products
+        ORDER BY product_name
+        """
+    )
+
+    products = cursor.fetchall()
+
+
+    cursor.execute(
+        """
+        SELECT
+            customer_id,
+            customer_name,
+            phone
+        FROM customers
+        ORDER BY customer_name
+        """
+    )
+
+    customers = cursor.fetchall()
+
+
+    cursor.close()
+
+    connection.close()
+
+
+    return render_template(
+        "billing.html",
+        products=products,
+        customers=customers,
+        error=error
+    )
+@app.route("/billing", methods=["GET", "POST"])
+def new_bill():
+
+    if request.method == "GET":
+        return load_billing_page()
+
+    connection = get_db_connection()
+
+    cursor = None
+    order_cursor = None
+
+    try:
+
+        customer_id = request.form.get("customer_id") or None
+        payment_method = request.form.get("payment_method")
+        cart_json = request.form.get("cart_data")
+
+        if not payment_method:
+            raise ValueError("Please select a payment method.")
+
+        if not cart_json:
+            raise ValueError("Cart is empty.")
+
+        cart_items = json.loads(cart_json)
+
+        if len(cart_items) == 0:
+            raise ValueError("Cart is empty.")
+
+        connection.start_transaction()
+
+        cursor = connection.cursor(dictionary=True)
+
+        subtotal = 0
+        tax_total = 0
+
+        verified_items = []
+
+        for item in cart_items:
+
+            product_id = int(item["product_id"])
+            quantity = int(item["quantity"])
+
+            if quantity <= 0:
+                raise ValueError(
+                    "Invalid product quantity."
+                )
+
+            cursor.execute(
+                """
+                SELECT
+                    product_id,
+                    product_name,
+                    price,
+                    stock,
+                    tax_rate
+                FROM products
+                WHERE product_id = %s
+                FOR UPDATE
+                """,
+                (product_id,)
+            )
+
+            product = cursor.fetchone()
+
+            if not product:
+                raise ValueError(
+                    "Product not found."
+                )
+
+            if quantity > product["stock"]:
+                raise ValueError(
+                    f"Insufficient stock for "
+                    f"{product['product_name']}."
+                )
+
+            price = float(product["price"])
+
+            tax_rate = float(
+                product["tax_rate"] or 0
+            )
+
+            item_subtotal = (
+                price * quantity
+            )
+
+            item_tax = (
+                item_subtotal
+                * tax_rate
+                / 100
+            )
+
+            subtotal += item_subtotal
+            tax_total += item_tax
+
+            verified_items.append(
+                {
+                    "product_id": product_id,
+                    "product_name": product["product_name"],
+                    "quantity": quantity,
+                    "price": price
+                }
+            )
+
+        discount = 0
+
+        total_amount = (
+            subtotal
+            + tax_total
+            - discount
+        )
+
+        order_cursor = connection.cursor()
+
+        order_cursor.execute(
+            """
+            INSERT INTO orders
+            (
+                customer_id,
+                subtotal,
+                discount,
+                tax,
+                total_amount,
+                payment_method,
+                status
+            )
+            VALUES
+            (
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                'completed'
+            )
+            """,
+            (
+                customer_id,
+                subtotal,
+                discount,
+                tax_total,
+                total_amount,
+                payment_method
+            )
+        )
+
+        order_id = order_cursor.lastrowid
+
+        for item in verified_items:
+
+            order_cursor.execute(
+                """
+                INSERT INTO order_items
+                (
+                    order_id,
+                    product_id,
+                    quantity,
+                    price
+                )
+                VALUES
+                (
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                )
+                """,
+                (
+                    order_id,
+                    item["product_id"],
+                    item["quantity"],
+                    item["price"]
+                )
+            )
+
+            order_cursor.execute(
+                """
+                UPDATE products
+                SET stock = stock - %s
+                WHERE product_id = %s
+                """,
+                (
+                    item["quantity"],
+                    item["product_id"]
+                )
+            )
+
+        connection.commit()
+
+        return redirect(
+            url_for(
+                "view_bill",
+                order_id=order_id
+            )
+        )
+
+    except Exception as error:
+
+        if connection.is_connected():
+            connection.rollback()
+
+        return load_billing_page(
+            str(error)
+        )
+
+    finally:
+
+        if cursor is not None:
+            cursor.close()
+
+        if order_cursor is not None:
+            order_cursor.close()
+
+        if connection.is_connected():
+            connection.close()
+
+
+@app.route("/bill/<int:order_id>")
+def view_bill(order_id):
+
+    connection = get_db_connection()
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT
+                orders.*,
+                customers.customer_name
+            FROM orders
+            LEFT JOIN customers
+                ON orders.customer_id =
+                   customers.customer_id
+            WHERE orders.order_id = %s
+            """,
+            (order_id,)
+        )
+
+        order = cursor.fetchone()
+
+        if not order:
+            return "Bill not found.", 404
+
+        cursor.execute(
+            """
+            SELECT
+                order_items.*,
+                products.product_name
+            FROM order_items
+            JOIN products
+                ON order_items.product_id =
+                   products.product_id
+            WHERE order_items.order_id = %s
+            ORDER BY order_items.order_item_id
+            """,
+            (order_id,)
+        )
+
+        items = cursor.fetchall()
+
+        return render_template(
+            "view_bill.html",
+            order=order,
+            items=items
+        )
+
+    finally:
+
+        cursor.close()
+
+        if connection.is_connected():
+            connection.close()
+
+@app.route("/bills")
+def bill_history():
+
+    search = request.args.get("search", "").strip()
+
+    connection = get_db_connection()
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    search_pattern = f"%{search}%"
+
+    cursor.execute(
+        """
+        SELECT
+            orders.order_id,
+            orders.order_date,
+            orders.payment_method,
+            orders.status,
+            orders.total_amount,
+            customers.customer_name
+        FROM orders
+        LEFT JOIN customers
+            ON orders.customer_id =
+               customers.customer_id
+        WHERE
+            CAST(orders.order_id AS CHAR) LIKE %s
+            OR COALESCE(customers.customer_name, '') LIKE %s
+            OR COALESCE(orders.payment_method, '') LIKE %s
+        ORDER BY orders.order_id DESC
+        """,
+        (
+            search_pattern,
+            search_pattern,
+            search_pattern
+        )
+    )
+
+    orders = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "bill_history.html",
+        orders=orders,
+        search=search
+    )
+
+@app.route("/bill/<int:order_id>/download")
+def download_bill(order_id):
+
+    connection = get_db_connection()
+
+    cursor = connection.cursor(
+        dictionary=True
+    )
+
+    try:
+
+        cursor.execute(
+            """
+            SELECT
+                orders.*,
+                customers.customer_name,
+                customers.phone
+            FROM orders
+            LEFT JOIN customers
+                ON orders.customer_id =
+                   customers.customer_id
+            WHERE orders.order_id = %s
+            """,
+            (order_id,)
+        )
+
+        order = cursor.fetchone()
+
+        if not order:
+            return "Bill not found.", 404
+
+        cursor.execute(
+            """
+            SELECT
+                order_items.quantity,
+                order_items.price,
+                products.product_name
+            FROM order_items
+            JOIN products
+                ON order_items.product_id =
+                   products.product_id
+            WHERE order_items.order_id = %s
+            ORDER BY order_items.order_item_id
+            """,
+            (order_id,)
+        )
+
+        items = cursor.fetchall()
+
+        customer_name = (
+            order["customer_name"]
+            or "Walk-in Customer"
+        )
+
+        lines = []
+
+        lines.append(
+            "========================================"
+        )
+
+        lines.append(
+            "              STORELEDGER"
+        )
+
+        lines.append(
+            "========================================"
+        )
+
+        lines.append(
+            f"Invoice ID : #{order['order_id']}"
+        )
+
+        lines.append(
+            f"Date       : {order['order_date']}"
+        )
+
+        lines.append(
+            f"Customer   : {customer_name}"
+        )
+
+        if order["phone"]:
+            lines.append(
+                f"Phone      : {order['phone']}"
+            )
+
+        lines.append(
+            f"Payment    : {order['payment_method']}"
+        )
+
+        lines.append(
+            f"Status     : {order['status']}"
+        )
+
+        lines.append(
+            "----------------------------------------"
+        )
+
+        lines.append(
+            "ITEMS"
+        )
+
+        lines.append(
+            "----------------------------------------"
+        )
+
+        for item in items:
+
+            item_total = (
+                float(item["price"])
+                * item["quantity"]
+            )
+
+            lines.append(
+                f"{item['product_name']}"
+            )
+
+            lines.append(
+                f"  {item['quantity']} x "
+                f"Rs.{float(item['price']):.2f}"
+                f" = Rs.{item_total:.2f}"
+            )
+
+        lines.append(
+            "----------------------------------------"
+        )
+
+        lines.append(
+            f"Subtotal : Rs."
+            f"{float(order['subtotal']):.2f}"
+        )
+
+        lines.append(
+            f"Tax      : Rs."
+            f"{float(order['tax']):.2f}"
+        )
+
+        lines.append(
+            f"Discount : Rs."
+            f"{float(order['discount']):.2f}"
+        )
+
+        lines.append(
+            "----------------------------------------"
+        )
+
+        lines.append(
+            f"TOTAL    : Rs."
+            f"{float(order['total_amount']):.2f}"
+        )
+
+        lines.append(
+            "========================================"
+        )
+
+        lines.append(
+            "Thank you for shopping with StoreLedger!"
+        )
+
+        lines.append(
+            "========================================"
+        )
+
+        bill_text = "\n".join(lines)
+
+        filename = (
+            f"StoreLedger_Invoice_"
+            f"{order_id}.txt"
+        )
+
+        return Response(
+            bill_text,
+            mimetype="text/plain",
+            headers={
+                "Content-Disposition":
+                    f"attachment; filename={filename}"
+            }
+        )
+
+    finally:
+
+        cursor.close()
+
+        if connection.is_connected():
+            connection.close()
+
+
 if __name__ == "__main__":
     app.run(debug=True)

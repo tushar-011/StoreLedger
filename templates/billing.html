@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}
+New Bill | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+New Bill
+{% endblock %}
+
+{% block content %}
+
+{% if error %}
+
+<div class="error-message">
+    {{ error }}
+</div>
+
+{% endif %}
+
+
+<div class="billing-layout">
+
+    <!-- LEFT SIDE -->
+    <div class="billing-products">
+
+        <div class="table-card">
+
+            <h3 class="section-title">
+                Products
+            </h3>
+
+            <input
+                type="text"
+                id="productSearch"
+                class="billing-search"
+                placeholder="Search products..."
+            >
+
+            <table class="data-table" id="productTable">
+
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for product in products %}
+
+                    <tr>
+
+                        <td>
+                            {{ product.product_name }}
+                        </td>
+
+                        <td>
+                            ₹{{ product.price }}
+                        </td>
+
+                        <td>
+                            {{ product.stock }}
+                        </td>
+
+                        <td>
+
+                            {% if product.stock > 0 %}
+
+                            <button
+                                type="button"
+                                class="primary-button add-cart-button"
+                                data-id="{{ product.product_id }}"
+                                data-name="{{ product.product_name }}"
+                                data-price="{{ product.price }}"
+                                data-stock="{{ product.stock }}"
+                            >
+                                Add
+                            </button>
+
+                            {% else %}
+
+                            <span class="out-stock-badge">
+                                Out of Stock
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+                        <td colspan="4">
+                            No products available.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- RIGHT SIDE -->
+
+    <div class="billing-cart">
+
+        <div class="table-card">
+
+            <h3 class="section-title">
+                Current Bill
+            </h3>
+
+            <form method="POST" id="billingForm">
+
+                <div class="form-group">
+
+                    <label>
+                        Customer
+                    </label>
+
+                    <select name="customer_id">
+
+                        <option value="">
+                            Walk-in Customer
+                        </option>
+
+                        {% for customer in customers %}
+
+                        <option value="{{ customer.customer_id }}">
+                            {{ customer.customer_name }}
+                            {% if customer.phone %}
+                                - {{ customer.phone }}
+                            {% endif %}
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="cart-container">
+
+                    <table class="data-table">
+
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="cartBody">
+
+                            <tr id="emptyCartRow">
+                                <td colspan="5" class="empty-table">
+                                    No products added.
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <div class="bill-summary">
+
+                    <div>
+                        <span>Subtotal</span>
+                        <strong id="subtotalDisplay">
+                            ₹0.00
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Tax</span>
+                        <strong id="taxDisplay">
+                            Calculated at checkout
+                        </strong>
+                    </div>
+
+                    <div class="grand-total">
+                        <span>Estimated Total</span>
+                        <strong id="totalDisplay">
+                            ₹0.00
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Payment Method
+                    </label>
+
+                    <select
+                        name="payment_method"
+                        required
+                    >
+
+                        <option value="">
+                            Select Payment Method
+                        </option>
+
+                        <option value="Cash">
+                            Cash
+                        </option>
+
+                        <option value="Card">
+                            Card
+                        </option>
+
+                        <option value="UPI">
+                            UPI
+                        </option>
+
+                        <option value="Wallet">
+                            Wallet
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <input
+                    type="hidden"
+                    name="cart_data"
+                    id="cartData"
+                >
+
+
+                <button
+                    type="submit"
+                    class="primary-button generate-bill-button"
+                >
+                    Generate Bill
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/billing.js') }}">
+</script>
+
+{% endblock %}
