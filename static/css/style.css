@@ -620,3 +620,17 @@ button.primary-button {
     line-height: 1.5;
 }
 
+.customer-details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+
+    .customer-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+}

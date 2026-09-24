@@ -1364,6 +1364,68 @@ def add_wallet_balance(customer_id):
         customer=customer
     )
     
+@app.route("/customers/<int:customer_id>")
+def customer_details(customer_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM customers
+        WHERE customer_id = %s
+        """,
+        (customer_id,)
+    )
+
+    customer = cursor.fetchone()
+
+    if not customer:
+        cursor.close()
+        connection.close()
+
+        return "Customer not found.", 404
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM wallet_transactions
+        WHERE customer_id = %s
+        ORDER BY wallet_transaction_id DESC
+        """,
+        (customer_id,)
+    )
+
+    wallet_transactions = cursor.fetchall()
+
+    cursor.execute(
+        """
+        SELECT
+            orders.order_id,
+            orders.order_date,
+            orders.total_amount,
+            orders.payment_method,
+            orders.status
+        FROM orders
+        WHERE customer_id = %s
+        ORDER BY orders.order_id DESC
+        """,
+        (customer_id,)
+    )
+
+    orders = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "customer_details.html",
+        customer=customer,
+        wallet_transactions=wallet_transactions,
+        orders=orders
+    )
+    
 
 if __name__ == "__main__":
     app.run(debug=True)
