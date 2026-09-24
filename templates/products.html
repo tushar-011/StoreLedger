@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}
+Products | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Products
+{% endblock %}
+
+{% block content %}
+
+<div class="page-actions">
+    <a href="{{ url_for('add_product') }}" class="primary-button">
+        Add Product
+    </a>
+</div>
+
+<div class="table-card">
+
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Minimum Stock</th>
+                <th>Tax</th>
+                <th>Expiry</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for product in products %}
+
+            <tr>
+                <td>{{ product.product_id }}</td>
+
+                <td>{{ product.product_name }}</td>
+
+                <td>
+                    {{ product.category_name or "Uncategorized" }}
+                </td>
+
+                <td>₹{{ product.price }}</td>
+
+                <td>{{ product.stock }}</td>
+
+                <td>{{ product.minimum_stock }}</td>
+
+                <td>{{ product.tax_rate }}%</td>
+
+                <td>
+                    {{ product.expiry_date or "-" }}
+                </td>
+
+                <td class="action-buttons">
+
+                    <a
+                        href="{{ url_for('edit_product', product_id=product.product_id) }}"
+                        class="edit-button"
+                    >
+                        Edit
+                    </a>
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('delete_product', product_id=product.product_id) }}"
+                        class="inline-form"
+                    >
+
+                        <button
+                            type="submit"
+                            class="delete-button"
+                            onclick="return confirm('Delete this product?')"
+                        >
+                            Delete
+                        </button>
+
+                    </form>
+
+                </td>
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td colspan="9" class="empty-table">
+                    No products found.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}
