@@ -844,15 +844,11 @@ def new_bill():
                 )
             )
 
-            order_cursor.execute(
-                """
-                UPDATE products
-                SET stock = stock - %s
-                WHERE product_id = %s
-                """,
+            order_cursor.callproc(
+                "process_order_item",
                 (
-                    item["quantity"],
-                    item["product_id"]
+                    item["product_id"],
+                    item["quantity"]
                 )
             )
 
