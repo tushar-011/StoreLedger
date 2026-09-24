@@ -78,6 +78,25 @@ def dashboard():
 
     low_stock = cursor.fetchone()[0]
 
+    cursor.execute(
+        """
+        SELECT
+            COALESCE(total_revenue, 0) AS total_revenue,
+            COALESCE(total_orders, 0) AS total_orders
+        FROM daily_sales_view
+        WHERE sale_date = CURDATE()
+        """
+    )
+
+    today_sales = cursor.fetchone()
+
+    today_revenue = 0
+    today_orders = 0
+
+    if today_sales:
+        today_revenue = today_sales["total_revenue"]
+        today_orders = today_sales["total_orders"]
+        
     cursor.close()
     connection.close()
 
@@ -86,7 +105,9 @@ def dashboard():
         total_products=total_products,
         total_customers=total_customers,
         total_orders=total_orders,
-        low_stock=low_stock
+        low_stock=low_stock,
+        today_revenue=today_revenue,
+        today_orders=today_orders
     )
 
 @app.route("/products/add", methods=["GET", "POST"])
@@ -372,14 +393,9 @@ def low_stock():
 
     cursor.execute(
         """
-        SELECT
-            products.*,
-            categories.category_name
-        FROM products
-        LEFT JOIN categories
-            ON products.category_id = categories.category_id
-        WHERE products.stock <= products.minimum_stock
-        ORDER BY products.stock ASC
+        SELECT *
+        FROM low_stock_view
+        ORDER BY stock ASC
         """
     )
 
@@ -657,7 +673,7 @@ def load_billing_page(error=None):
     )
 @app.route("/billing", methods=["GET", "POST"])
 def new_bill():
-
+        
     if request.method == "GET":
         return load_billing_page()
 
@@ -666,6 +682,7 @@ def new_bill():
     cursor = None
     order_cursor = None
     discount_cursor = None
+    reward_cursor = None
 
     try:
 
@@ -837,23 +854,45 @@ def new_bill():
                 )
             )
 
-        if payment_method == "Wallet":
+            if payment_method == "Wallet":
 
-            if customer_id is None:
-                raise ValueError(
-                    "Please select a customer for wallet payment."
+                if customer_id is None:
+                    raise ValueError(
+                        "Please select a customer for wallet payment."
+                    )
+
+                order_cursor.callproc(
+                    "process_wallet_payment",
+                    (
+                        int(customer_id),
+                        total_amount,
+                        order_id
+                    )
                 )
 
-            order_cursor.callproc(
-                "process_wallet_payment",
-                (
-                    int(customer_id),
-                    total_amount,
-                    order_id
+
+            print("CUSTOMER ID:", customer_id)
+            print("TOTAL AMOUNT:", total_amount)
+
+
+            if customer_id is not None:
+
+                reward_cursor = connection.cursor()
+
+                reward_cursor.execute(
+                    """
+                    CALL add_reward_points(%s, %s)
+                    """,
+                    (
+                        int(customer_id),
+                        total_amount
+                    )
                 )
-            )
-            
-        connection.commit()
+
+                reward_cursor.close()
+
+
+            connection.commit()
 
         return redirect(
             url_for(
@@ -936,8 +975,12 @@ def new_bill():
         if order_cursor is not None:
             order_cursor.close()
 
+        if reward_cursor is not None:
+            reward_cursor.close()
+
         if connection.is_connected():
             connection.close()
+            
 
 @app.route("/bill/<int:order_id>")
 def view_bill(order_id):

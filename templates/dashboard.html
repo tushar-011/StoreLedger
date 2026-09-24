@@ -47,4 +47,14 @@ Dashboard
 
 </div>
 
+<div class="dashboard-card">
+    <h3>Today's Revenue</h3>
+    <p>₹{{ "%.2f"|format(today_revenue) }}</p>
+</div>
+
+<div class="dashboard-card">
+    <h3>Bills Today</h3>
+    <p>{{ today_orders }}</p>
+</div>
+
 {% endblock %}
