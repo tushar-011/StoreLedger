@@ -18,6 +18,27 @@ Products
 
 <div class="table-card">
 
+    <form method="GET" class="search-form">
+
+        <input
+            type="text"
+            name="search"
+            placeholder="Search products..."
+            value="{{ search }}"
+        >
+
+        <button type="submit" class="primary-button">
+            Search
+        </button>
+
+        {% if search %}
+        <a href="{{ url_for('products') }}" class="secondary-button">
+            Clear
+        </a>
+        {% endif %}
+
+    </form>
+
     <table class="data-table">
 
         <thead>
@@ -38,22 +59,41 @@ Products
 
             {% for product in products %}
 
-            <tr>
-                <td>{{ product.product_id }}</td>
+            <tr class="{% if product.stock <= product.minimum_stock %}low-stock-row{% endif %}">
 
-                <td>{{ product.product_name }}</td>
+                <td>
+                    {{ product.product_id }}
+                </td>
+
+                <td>
+                    {{ product.product_name }}
+                </td>
 
                 <td>
                     {{ product.category_name or "Uncategorized" }}
                 </td>
 
-                <td>₹{{ product.price }}</td>
+                <td>
+                    ₹{{ product.price }}
+                </td>
 
-                <td>{{ product.stock }}</td>
+                <td>
+                    {{ product.stock }}
 
-                <td>{{ product.minimum_stock }}</td>
+                    {% if product.stock <= product.minimum_stock %}
+                        <span class="low-stock-badge">
+                            Low
+                        </span>
+                    {% endif %}
+                </td>
 
-                <td>{{ product.tax_rate }}%</td>
+                <td>
+                    {{ product.minimum_stock }}
+                </td>
+
+                <td>
+                    {{ product.tax_rate }}%
+                </td>
 
                 <td>
                     {{ product.expiry_date or "-" }}
@@ -85,13 +125,20 @@ Products
                     </form>
 
                 </td>
+
             </tr>
 
             {% else %}
 
             <tr>
                 <td colspan="9" class="empty-table">
-                    No products found.
+
+                    {% if search %}
+                        No products found for "{{ search }}".
+                    {% else %}
+                        No products found.
+                    {% endif %}
+
                 </td>
             </tr>
 

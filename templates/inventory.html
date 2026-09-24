@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}
+Inventory | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Inventory Management
+{% endblock %}
+
+{% block content %}
+
+<div class="inventory-summary">
+
+    <div class="dashboard-card">
+        <h3>Total Products</h3>
+        <p>{{ total_products }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Total Stock Units</h3>
+        <p>{{ total_stock }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Low Stock Products</h3>
+        <p>{{ low_stock_count }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Out of Stock</h3>
+        <p>{{ out_of_stock_count }}</p>
+    </div>
+
+</div>
+
+
+<div class="inventory-navigation">
+
+    <a href="{{ url_for('inventory') }}"
+       class="secondary-button">
+        All Inventory
+    </a>
+
+    <a href="{{ url_for('low_stock') }}"
+       class="secondary-button">
+        Low Stock
+    </a>
+
+</div>
+
+
+<div class="table-card">
+
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Current Stock</th>
+                <th>Minimum Stock</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for product in products %}
+
+            <tr
+                class="
+                {% if product.stock == 0 %}
+                    out-of-stock-row
+                {% elif product.stock <= product.minimum_stock %}
+                    low-stock-row
+                {% endif %}
+                "
+            >
+
+                <td>{{ product.product_id }}</td>
+
+                <td>{{ product.product_name }}</td>
+
+                <td>
+                    {{ product.category_name or "Uncategorized" }}
+                </td>
+
+                <td>
+                    {{ product.stock }}
+                </td>
+
+                <td>
+                    {{ product.minimum_stock }}
+                </td>
+
+                <td>
+
+                    {% if product.stock == 0 %}
+
+                        <span class="out-stock-badge">
+                            Out of Stock
+                        </span>
+
+                    {% elif product.stock <= product.minimum_stock %}
+
+                        <span class="low-stock-badge">
+                            Low Stock
+                        </span>
+
+                    {% else %}
+
+                        <span class="stock-ok-badge">
+                            In Stock
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td colspan="6" class="empty-table">
+                    No inventory data available.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

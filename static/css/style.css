@@ -328,3 +328,86 @@ button.primary-button {
     cursor: pointer;
     font-size: 15px;
 }
+
+.search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.search-form input {
+    width: 320px;
+    padding: 11px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+
+    font-size: 15px;
+}
+
+.low-stock-row {
+    background: #fff7ed;
+}
+
+.low-stock-badge {
+    display: inline-block;
+
+    margin-left: 6px;
+    padding: 3px 7px;
+
+    border-radius: 10px;
+
+    background: #fee2e2;
+    color: #b91c1c;
+
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.inventory-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.inventory-navigation {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.stock-ok-badge {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 12px;
+
+    background: #dcfce7;
+    color: #166534;
+
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.out-stock-badge {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 12px;
+
+    background: #fee2e2;
+    color: #991b1b;
+
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.out-of-stock-row {
+    background: #fef2f2;
+}
+
+@media (max-width: 900px) {
+    .inventory-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+

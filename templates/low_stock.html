@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}
+Low Stock | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Low Stock Report
+{% endblock %}
+
+{% block content %}
+
+<div class="page-actions">
+
+    <a href="{{ url_for('inventory') }}"
+       class="secondary-button">
+        Back to Inventory
+    </a>
+
+</div>
+
+<div class="table-card">
+
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Current Stock</th>
+                <th>Minimum Stock</th>
+                <th>Shortage</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for product in products %}
+
+            <tr class="low-stock-row">
+
+                <td>{{ product.product_id }}</td>
+
+                <td>{{ product.product_name }}</td>
+
+                <td>
+                    {{ product.category_name or "Uncategorized" }}
+                </td>
+
+                <td>
+                    {{ product.stock }}
+                </td>
+
+                <td>
+                    {{ product.minimum_stock }}
+                </td>
+
+                <td>
+                    {{ product.minimum_stock - product.stock }}
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td colspan="6" class="empty-table">
+                    No low-stock products.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

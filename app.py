@@ -80,34 +80,6 @@ def dashboard():
         low_stock=low_stock
     )
 
-@app.route("/products")
-def products():
-    connection = get_db_connection()
-
-    cursor = connection.cursor(dictionary=True)
-
-    cursor.execute(
-        """
-        SELECT
-            products.*,
-            categories.category_name
-        FROM products
-        LEFT JOIN categories
-            ON products.category_id = categories.category_id
-        ORDER BY products.product_id DESC
-        """
-    )
-
-    product_data = cursor.fetchall()
-
-    cursor.close()
-    connection.close()
-
-    return render_template(
-        "products.html",
-        products=product_data
-    )
-
 @app.route("/products/add", methods=["GET", "POST"])
 def add_product():
 
@@ -279,6 +251,138 @@ def delete_product(product_id):
     connection.close()
 
     return redirect(url_for("products"))
+
+@app.route("/products")
+def products():
+    search = request.args.get("search", "")
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT
+            products.*,
+            categories.category_name
+        FROM products
+        LEFT JOIN categories
+            ON products.category_id = categories.category_id
+        WHERE products.product_name LIKE %s
+        ORDER BY products.product_id DESC
+        """,
+        (f"%{search}%",)
+    )
+
+    product_data = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "products.html",
+        products=product_data,
+        search=search
+    )
+
+@app.route("/inventory")
+def inventory():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT
+            products.*,
+            categories.category_name
+        FROM products
+        LEFT JOIN categories
+            ON products.category_id = categories.category_id
+        ORDER BY products.product_name
+        """
+    )
+
+    product_data = cursor.fetchall()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS total_products
+        FROM products
+        """
+    )
+
+    total_products = cursor.fetchone()["total_products"]
+
+    cursor.execute(
+        """
+        SELECT COALESCE(SUM(stock), 0) AS total_stock
+        FROM products
+        """
+    )
+
+    total_stock = cursor.fetchone()["total_stock"]
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS low_stock_count
+        FROM products
+        WHERE stock <= minimum_stock
+        AND stock > 0
+        """
+    )
+
+    low_stock_count = cursor.fetchone()["low_stock_count"]
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS out_of_stock_count
+        FROM products
+        WHERE stock = 0
+        """
+    )
+
+    out_of_stock_count = cursor.fetchone()["out_of_stock_count"]
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "inventory.html",
+        products=product_data,
+        total_products=total_products,
+        total_stock=total_stock,
+        low_stock_count=low_stock_count,
+        out_of_stock_count=out_of_stock_count
+    )
+
+@app.route("/inventory/low-stock")
+def low_stock():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT
+            products.*,
+            categories.category_name
+        FROM products
+        LEFT JOIN categories
+            ON products.category_id = categories.category_id
+        WHERE products.stock <= products.minimum_stock
+        ORDER BY products.stock ASC
+        """
+    )
+
+    product_data = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "low_stock.html",
+        products=product_data
+    )
     
 if __name__ == "__main__":
     app.run(debug=True)
