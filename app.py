@@ -383,6 +383,55 @@ def low_stock():
         "low_stock.html",
         products=product_data
     )
+
+@app.route("/inventory/restock/<int:product_id>", methods=["GET", "POST"])
+def restock_product(product_id):
+
+    connection = get_db_connection()
+
+    if request.method == "POST":
+
+        quantity = int(request.form["quantity"])
+
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE products
+            SET stock = stock + %s
+            WHERE product_id = %s
+            """,
+            (quantity, product_id)
+        )
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return redirect(url_for("inventory"))
+
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM products
+        WHERE product_id = %s
+        """,
+        (product_id,)
+    )
+
+    product = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "restock_product.html",
+        product=product
+    )
+
     
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}
+Restock Product | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Restock Product
+{% endblock %}
+
+{% block content %}
+
+<div class="form-card">
+
+    <div class="restock-info">
+
+        <h3>{{ product.product_name }}</h3>
+
+        <p>
+            Current Stock:
+            <strong>{{ product.stock }}</strong>
+        </p>
+
+        <p>
+            Minimum Stock:
+            <strong>{{ product.minimum_stock }}</strong>
+        </p>
+
+    </div>
+
+    <form method="POST">
+
+        <div class="form-group">
+
+            <label>
+                Quantity to Add
+            </label>
+
+            <input
+                type="number"
+                name="quantity"
+                min="1"
+                required
+            >
+
+        </div>
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                class="primary-button"
+            >
+                Add Stock
+            </button>
+
+            <a
+                href="{{ url_for('inventory') }}"
+                class="secondary-button"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -37,13 +37,17 @@ Inventory Management
 
 <div class="inventory-navigation">
 
-    <a href="{{ url_for('inventory') }}"
-       class="secondary-button">
+    <a
+        href="{{ url_for('inventory') }}"
+        class="secondary-button"
+    >
         All Inventory
     </a>
 
-    <a href="{{ url_for('low_stock') }}"
-       class="secondary-button">
+    <a
+        href="{{ url_for('low_stock') }}"
+        class="secondary-button"
+    >
         Low Stock
     </a>
 
@@ -62,6 +66,7 @@ Inventory Management
                 <th>Current Stock</th>
                 <th>Minimum Stock</th>
                 <th>Status</th>
+                <th>Action</th>
             </tr>
         </thead>
 
@@ -79,9 +84,13 @@ Inventory Management
                 "
             >
 
-                <td>{{ product.product_id }}</td>
+                <td>
+                    {{ product.product_id }}
+                </td>
 
-                <td>{{ product.product_name }}</td>
+                <td>
+                    {{ product.product_name }}
+                </td>
 
                 <td>
                     {{ product.category_name or "Uncategorized" }}
@@ -119,12 +128,23 @@ Inventory Management
 
                 </td>
 
+                <td>
+
+                    <a
+                        href="{{ url_for('restock_product', product_id=product.product_id) }}"
+                        class="edit-button"
+                    >
+                        Restock
+                    </a>
+
+                </td>
+
             </tr>
 
             {% else %}
 
             <tr>
-                <td colspan="6" class="empty-table">
+                <td colspan="7" class="empty-table">
                     No inventory data available.
                 </td>
             </tr>
