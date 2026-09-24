@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}
+Reports | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Reports
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-grid">
+
+    <div class="dashboard-card">
+        <h3>Total Revenue</h3>
+        <p>₹{{ "%.2f"|format(total_revenue) }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Total Orders</h3>
+        <p>{{ total_orders }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Total Customers</h3>
+        <p>{{ total_customers }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Total Products Sold</h3>
+        <p>{{ total_products_sold }}</p>
+    </div>
+
+</div>
+
+
+<div class="table-card">
+
+    <h3 class="section-title">
+        Daily Sales
+    </h3>
+
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Orders</th>
+                <th>Subtotal</th>
+                <th>Discount</th>
+                <th>Tax</th>
+                <th>Revenue</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for row in daily_sales %}
+
+            <tr>
+
+                <td>
+                    {{ row.sale_date }}
+                </td>
+
+                <td>
+                    {{ row.total_orders }}
+                </td>
+
+                <td>
+                    ₹{{ "%.2f"|format(row.subtotal) }}
+                </td>
+
+                <td>
+                    ₹{{ "%.2f"|format(row.total_discount) }}
+                </td>
+
+                <td>
+                    ₹{{ "%.2f"|format(row.total_tax) }}
+                </td>
+
+                <td>
+                    ₹{{ "%.2f"|format(row.total_revenue) }}
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td colspan="6" class="empty-table">
+                    No sales data available.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+<br>
+
+
+<div class="table-card">
+
+    <h3 class="section-title">
+        Top Selling Products
+    </h3>
+
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity Sold</th>
+                <th>Revenue</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for product in top_products %}
+
+            <tr>
+
+                <td>
+                    {{ product.product_name }}
+                </td>
+
+                <td>
+                    {{ product.total_quantity }}
+                </td>
+
+                <td>
+                    ₹{{ "%.2f"|format(product.revenue) }}
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td colspan="3" class="empty-table">
+                    No product sales available.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+<br>
+
+
+<div class="table-card">
+
+    <h3 class="section-title">
+        Payment Method Distribution
+    </h3>
+
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>Payment Method</th>
+                <th>Orders</th>
+                <th>Total Amount</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for payment in payment_summary %}
+
+            <tr>
+
+                <td>
+                    {{ payment.payment_method }}
+                </td>
+
+                <td>
+                    {{ payment.total_orders }}
+                </td>
+
+                <td>
+                    ₹{{ "%.2f"|format(payment.total_amount) }}
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td colspan="3" class="empty-table">
+                    No payment data available.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

@@ -24,7 +24,7 @@ def database_test():
     try:
         connection = get_db_connection()
 
-        cursor = connection.cursor()
+        cursor = connection.cursor(dictionary=True)
         cursor.execute("SELECT DATABASE();")
 
         database_name = cursor.fetchone()[0]
@@ -55,34 +55,47 @@ def categories():
 
 @app.route("/dashboard")
 def dashboard():
+
     connection = get_db_connection()
-
-    cursor = connection.cursor()
-
-    cursor.execute("SELECT COUNT(*) FROM products")
-    total_products = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM customers")
-    total_customers = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM orders")
-    total_orders = cursor.fetchone()[0]
+    cursor = connection.cursor(dictionary=True)
 
     cursor.execute(
         """
-        SELECT COUNT(*)
+        SELECT COUNT(*) AS total
         FROM products
-        WHERE stock <= minimum_stock
         """
     )
+    total_products = cursor.fetchone()["total"]
 
-    low_stock = cursor.fetchone()[0]
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM customers
+        """
+    )
+    total_customers = cursor.fetchone()["total"]
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM orders
+        """
+    )
+    total_orders = cursor.fetchone()["total"]
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM low_stock_view
+        """
+    )
+    low_stock = cursor.fetchone()["total"]
 
     cursor.execute(
         """
         SELECT
-            COALESCE(total_revenue, 0) AS total_revenue,
-            COALESCE(total_orders, 0) AS total_orders
+            total_revenue,
+            total_orders
         FROM daily_sales_view
         WHERE sale_date = CURDATE()
         """
@@ -90,13 +103,13 @@ def dashboard():
 
     today_sales = cursor.fetchone()
 
-    today_revenue = 0
-    today_orders = 0
-
     if today_sales:
         today_revenue = today_sales["total_revenue"]
         today_orders = today_sales["total_orders"]
-        
+    else:
+        today_revenue = 0
+        today_orders = 0
+
     cursor.close()
     connection.close()
 
@@ -109,7 +122,7 @@ def dashboard():
         today_revenue=today_revenue,
         today_orders=today_orders
     )
-
+    
 @app.route("/products/add", methods=["GET", "POST"])
 def add_product():
 
@@ -1467,6 +1480,128 @@ def customer_details(customer_id):
         customer=customer,
         wallet_transactions=wallet_transactions,
         orders=orders
+    )
+    
+@app.route("/reports")
+def reports():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT
+            COALESCE(SUM(total_amount), 0) AS total_revenue,
+            COUNT(*) AS total_orders
+        FROM orders
+        WHERE status = 'completed'
+        """
+    )
+
+    totals = cursor.fetchone()
+
+    total_revenue = totals["total_revenue"]
+    total_orders = totals["total_orders"]
+
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS total_customers
+        FROM customers
+        """
+    )
+
+    total_customers = (
+        cursor.fetchone()["total_customers"]
+    )
+
+
+    cursor.execute(
+        """
+        SELECT
+            COALESCE(SUM(quantity), 0)
+            AS total_products_sold
+        FROM order_items
+        """
+    )
+
+    total_products_sold = (
+        cursor.fetchone()["total_products_sold"]
+    )
+
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM daily_sales_view
+        ORDER BY sale_date DESC
+        """
+    )
+
+    daily_sales = cursor.fetchall()
+
+
+    cursor.execute(
+        """
+        SELECT
+            products.product_name,
+            SUM(order_items.quantity)
+                AS total_quantity,
+            SUM(
+                order_items.quantity
+                * order_items.price
+            ) AS revenue
+        FROM order_items
+
+        JOIN products
+            ON order_items.product_id =
+               products.product_id
+
+        GROUP BY
+            products.product_id,
+            products.product_name
+
+        ORDER BY
+            total_quantity DESC
+
+        LIMIT 10
+        """
+    )
+
+    top_products = cursor.fetchall()
+
+
+    cursor.execute(
+        """
+        SELECT
+            payment_method,
+            COUNT(*) AS total_orders,
+            SUM(total_amount) AS total_amount
+        FROM orders
+
+        WHERE status = 'completed'
+
+        GROUP BY payment_method
+
+        ORDER BY total_orders DESC
+        """
+    )
+
+    payment_summary = cursor.fetchall()
+
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "reports.html",
+        total_revenue=total_revenue,
+        total_orders=total_orders,
+        total_customers=total_customers,
+        total_products_sold=total_products_sold,
+        daily_sales=daily_sales,
+        top_products=top_products,
+        payment_summary=payment_summary
     )
     
 
