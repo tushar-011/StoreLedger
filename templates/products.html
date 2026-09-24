@@ -11,9 +11,11 @@ Products
 {% block content %}
 
 <div class="page-actions">
+
     <a href="{{ url_for('add_product') }}" class="primary-button">
         Add Product
     </a>
+
 </div>
 
 <div class="table-card">
@@ -32,9 +34,11 @@ Products
         </button>
 
         {% if search %}
+
         <a href="{{ url_for('products') }}" class="secondary-button">
             Clear
         </a>
+
         {% endif %}
 
     </form>
@@ -42,10 +46,12 @@ Products
     <table class="data-table">
 
         <thead>
+
             <tr>
                 <th>ID</th>
                 <th>Product</th>
                 <th>Category</th>
+                <th>Supplier</th>
                 <th>Price</th>
                 <th>Stock</th>
                 <th>Minimum Stock</th>
@@ -53,6 +59,7 @@ Products
                 <th>Expiry</th>
                 <th>Actions</th>
             </tr>
+
         </thead>
 
         <tbody>
@@ -74,6 +81,10 @@ Products
                 </td>
 
                 <td>
+                    {{ product.supplier_name or "-" }}
+                </td>
+
+                <td>
                     ₹{{ product.price }}
                 </td>
 
@@ -81,9 +92,11 @@ Products
                     {{ product.stock }}
 
                     {% if product.stock <= product.minimum_stock %}
-                        <span class="low-stock-badge">
-                            Low
-                        </span>
+
+                    <span class="low-stock-badge">
+                        Low
+                    </span>
+
                     {% endif %}
                 </td>
 
@@ -131,7 +144,8 @@ Products
             {% else %}
 
             <tr>
-                <td colspan="9" class="empty-table">
+
+                <td colspan="10" class="empty-table">
 
                     {% if search %}
                         No products found for "{{ search }}".
@@ -140,6 +154,7 @@ Products
                     {% endif %}
 
                 </td>
+
             </tr>
 
             {% endfor %}

@@ -374,15 +374,30 @@ def products():
     cursor.execute(
         """
         SELECT
-            products.*,
-            categories.category_name
-        FROM products
-        LEFT JOIN categories
-            ON products.category_id = categories.category_id
-        WHERE products.product_name LIKE %s
-        ORDER BY products.product_id DESC
+            p.product_id,
+            p.product_name,
+            c.category_name,
+            s.supplier_name,
+            p.price,
+            p.stock,
+            p.minimum_stock,
+            p.tax_rate,
+            p.expiry_date
+        FROM products p
+        LEFT JOIN categories c
+            ON p.category_id = c.category_id
+        LEFT JOIN suppliers s
+            ON p.supplier_id = s.supplier_id
+        WHERE p.product_name LIKE %s
+        OR c.category_name LIKE %s
+        OR s.supplier_name LIKE %s
+        ORDER BY p.product_id DESC
         """,
-        (f"%{search}%",)
+        (
+            f"%{search}%",
+            f"%{search}%",
+            f"%{search}%"
+        )
     )
 
     product_data = cursor.fetchall()
@@ -405,12 +420,19 @@ def inventory():
     cursor.execute(
         """
         SELECT
-            products.*,
-            categories.category_name
-        FROM products
-        LEFT JOIN categories
-            ON products.category_id = categories.category_id
-        ORDER BY products.product_name
+            p.product_id,
+            p.product_name,
+            c.category_name,
+            s.supplier_name,
+            p.stock,
+            p.minimum_stock,
+            p.expiry_date
+        FROM products p
+        LEFT JOIN categories c
+            ON p.category_id = c.category_id
+        LEFT JOIN suppliers s
+            ON p.supplier_id = s.supplier_id
+        ORDER BY p.product_name
         """
     )
 
@@ -522,9 +544,16 @@ def restock_product(product_id):
 
     cursor.execute(
         """
-        SELECT *
-        FROM products
-        WHERE product_id = %s
+        SELECT
+            p.*,
+            s.supplier_name,
+            s.company_name,
+            s.phone,
+            s.email
+        FROM products p
+        LEFT JOIN suppliers s
+            ON p.supplier_id = s.supplier_id
+        WHERE p.product_id = %s
         """,
         (product_id,)
     )

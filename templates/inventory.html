@@ -66,15 +66,18 @@ Inventory Management
     <table class="data-table">
 
         <thead>
+
             <tr>
                 <th>ID</th>
                 <th>Product</th>
                 <th>Category</th>
+                <th>Supplier</th>
                 <th>Current Stock</th>
                 <th>Minimum Stock</th>
                 <th>Status</th>
                 <th>Action</th>
             </tr>
+
         </thead>
 
         <tbody>
@@ -104,6 +107,10 @@ Inventory Management
                 </td>
 
                 <td>
+                    {{ product.supplier_name or "-" }}
+                </td>
+
+                <td>
                     {{ product.stock }}
                 </td>
 
@@ -115,21 +122,21 @@ Inventory Management
 
                     {% if product.stock == 0 %}
 
-                        <span class="out-stock-badge">
-                            Out of Stock
-                        </span>
+                    <span class="out-stock-badge">
+                        Out of Stock
+                    </span>
 
                     {% elif product.stock <= product.minimum_stock %}
 
-                        <span class="low-stock-badge">
-                            Low Stock
-                        </span>
+                    <span class="low-stock-badge">
+                        Low Stock
+                    </span>
 
                     {% else %}
 
-                        <span class="stock-ok-badge">
-                            In Stock
-                        </span>
+                    <span class="stock-ok-badge">
+                        In Stock
+                    </span>
 
                     {% endif %}
 
@@ -151,9 +158,11 @@ Inventory Management
             {% else %}
 
             <tr>
-                <td colspan="7" class="empty-table">
+
+                <td colspan="8" class="empty-table">
                     No inventory data available.
                 </td>
+
             </tr>
 
             {% endfor %}

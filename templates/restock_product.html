@@ -31,6 +31,35 @@ Restock Product
     <form method="POST">
 
         <div class="form-group">
+                <label>Supplier</label>
+
+                <input
+                    type="text"
+                    value="{{ product.supplier_name or 'No Supplier Assigned' }}"
+                    readonly
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Company</label>
+
+                <input
+                    type="text"
+                    value="{{ product.company_name or '-' }}"
+                    readonly
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Phone</label>
+
+                <input
+                    type="text"
+                    value="{{ product.phone or '-' }}"
+                    readonly
+                >
+            </div>
+        <div class="form-group">
 
             <label>
                 Quantity to Add
