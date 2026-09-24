@@ -85,3 +85,21 @@ CREATE TABLE audit_log (
     new_value TEXT,
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+USE storeledger;
+
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+    wallet_transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    transaction_type VARCHAR(30) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    balance_after DECIMAL(10,2) NOT NULL,
+    order_id INT NULL,
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (customer_id)
+        REFERENCES customers(customer_id),
+
+    FOREIGN KEY (order_id)
+        REFERENCES orders(order_id)
+);

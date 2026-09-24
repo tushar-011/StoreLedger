@@ -50,8 +50,9 @@ document
                     existingProduct.quantity >= stock
                 ) {
 
-                    alert(
-                        "Cannot add more than available stock."
+                    showPopup(
+                        "Cannot add more than available stock.",
+                        "Stock Limit"
                     );
 
                     return;
@@ -211,8 +212,9 @@ function setupQuantityEvents() {
                         quantity =
                             item.max_stock;
 
-                        alert(
-                            "Quantity cannot exceed available stock."
+                        showPopup(
+                            "Quantity cannot exceed available stock.",
+                            "Stock Limit"
                         );
 
                     }
@@ -313,8 +315,9 @@ billingForm.addEventListener(
 
             event.preventDefault();
 
-            alert(
-                "Please add at least one product."
+            showPopup(
+                "Please add at least one product before generating the bill.",
+                "Empty Cart"
             );
 
         }
@@ -357,3 +360,30 @@ productSearch.addEventListener(
 
     }
 );
+
+function showPopup(message, title = "Notice") {
+
+    const popup =
+        document.getElementById("customPopup");
+
+    const popupTitle =
+        document.getElementById("popupTitle");
+
+    const popupMessage =
+        document.getElementById("popupMessage");
+
+    popupTitle.textContent = title;
+    popupMessage.textContent = message;
+
+    popup.classList.remove("hidden");
+}
+
+
+function closePopup() {
+
+    const popup =
+        document.getElementById("customPopup");
+
+    popup.classList.add("hidden");
+}
+

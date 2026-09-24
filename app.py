@@ -7,6 +7,7 @@ from flask import(
     url_for, 
     Response
 )
+import mysql.connector
 from db import get_db_connection
 
 
@@ -664,6 +665,7 @@ def new_bill():
 
     cursor = None
     order_cursor = None
+    discount_cursor = None
 
     try:
 
@@ -697,9 +699,7 @@ def new_bill():
             quantity = int(item["quantity"])
 
             if quantity <= 0:
-                raise ValueError(
-                    "Invalid product quantity."
-                )
+                raise ValueError("Invalid product quantity.")
 
             cursor.execute(
                 """
@@ -719,31 +719,18 @@ def new_bill():
             product = cursor.fetchone()
 
             if not product:
-                raise ValueError(
-                    "Product not found."
-                )
+                raise ValueError("Product not found.")
 
             if quantity > product["stock"]:
                 raise ValueError(
-                    f"Insufficient stock for "
-                    f"{product['product_name']}."
+                    f"Insufficient stock for {product['product_name']}."
                 )
 
             price = float(product["price"])
+            tax_rate = float(product["tax_rate"] or 0)
 
-            tax_rate = float(
-                product["tax_rate"] or 0
-            )
-
-            item_subtotal = (
-                price * quantity
-            )
-
-            item_tax = (
-                item_subtotal
-                * tax_rate
-                / 100
-            )
+            item_subtotal = price * quantity
+            item_tax = item_subtotal * tax_rate / 100
 
             subtotal += item_subtotal
             tax_total += item_tax
@@ -771,8 +758,6 @@ def new_bill():
         discount = float(
             discount_result[0] or 0
         )
-
-        discount_cursor.close()
 
         total_amount = (
             subtotal
@@ -852,6 +837,22 @@ def new_bill():
                 )
             )
 
+        if payment_method == "Wallet":
+
+            if customer_id is None:
+                raise ValueError(
+                    "Please select a customer for wallet payment."
+                )
+
+            order_cursor.callproc(
+                "process_wallet_payment",
+                (
+                    int(customer_id),
+                    total_amount,
+                    order_id
+                )
+            )
+            
         connection.commit()
 
         return redirect(
@@ -861,7 +862,52 @@ def new_bill():
             )
         )
 
-    except Exception as error:
+    except mysql.connector.Error as error:
+
+        if connection.is_connected():
+            connection.rollback()
+
+        error_message = str(error)
+
+        if "Insufficient stock" in error_message:
+            error_message = (
+                "Insufficient stock. "
+                "Please reduce the requested quantity."
+            )
+
+        elif "Invalid quantity" in error_message:
+            error_message = (
+                "Invalid quantity. "
+                "Quantity must be greater than zero."
+            )
+
+        elif "Product not found" in error_message:
+            error_message = (
+                "One of the selected products no longer exists."
+            )
+
+        elif "Insufficient wallet balance" in error_message:
+            error_message = (
+                "Insufficient wallet balance. "
+                "Please add money to the wallet or choose another payment method."
+            )
+
+        elif "Invalid customer account" in error_message:
+            error_message = (
+                "The selected customer account is invalid."
+            )
+            
+        else:
+            error_message = (
+                "Database error: "
+                + error_message
+            )
+
+        return load_billing_page(
+            error_message
+        )
+
+    except ValueError as error:
 
         if connection.is_connected():
             connection.rollback()
@@ -870,17 +916,28 @@ def new_bill():
             str(error)
         )
 
+    except Exception:
+
+        if connection.is_connected():
+            connection.rollback()
+
+        return load_billing_page(
+            "Something went wrong while generating the bill."
+        )
+
     finally:
 
         if cursor is not None:
             cursor.close()
+
+        if discount_cursor is not None:
+            discount_cursor.close()
 
         if order_cursor is not None:
             order_cursor.close()
 
         if connection.is_connected():
             connection.close()
-
 
 @app.route("/bill/<int:order_id>")
 def view_bill(order_id):
@@ -1204,6 +1261,109 @@ def audit_logs():
         logs=logs
     )
 
+@app.route(
+    "/customers/<int:customer_id>/wallet/add",
+    methods=["GET", "POST"]
+)
+def add_wallet_balance(customer_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM customers
+        WHERE customer_id = %s
+        """,
+        (customer_id,)
+    )
+
+    customer = cursor.fetchone()
+
+    if not customer:
+
+        cursor.close()
+        connection.close()
+
+        return "Customer not found.", 404
+
+    if request.method == "POST":
+
+        try:
+
+            amount = float(
+                request.form["amount"]
+            )
+
+            if amount <= 0:
+                raise ValueError(
+                    "Amount must be greater than zero."
+                )
+
+            new_balance = (
+                float(customer["wallet_balance"])
+                + amount
+            )
+
+            update_cursor = connection.cursor()
+
+            update_cursor.execute(
+                """
+                UPDATE customers
+                SET wallet_balance = wallet_balance + %s
+                WHERE customer_id = %s
+                """,
+                (
+                    amount,
+                    customer_id
+                )
+            )
+
+            update_cursor.execute(
+                """
+                INSERT INTO wallet_transactions
+                (
+                    customer_id,
+                    transaction_type,
+                    amount,
+                    balance_after
+                )
+                VALUES
+                (%s, 'CREDIT', %s, %s)
+                """,
+                (
+                    customer_id,
+                    amount,
+                    new_balance
+                )
+            )
+
+            connection.commit()
+
+            update_cursor.close()
+            cursor.close()
+            connection.close()
+
+            return redirect(
+                url_for("customers")
+            )
+
+        except ValueError:
+
+            cursor.close()
+            connection.close()
+
+            return "Invalid wallet amount.", 400
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "add_wallet_balance.html",
+        customer=customer
+    )
+    
 
 if __name__ == "__main__":
     app.run(debug=True)

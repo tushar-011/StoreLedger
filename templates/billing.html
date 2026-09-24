@@ -13,7 +13,13 @@ New Bill
 {% if error %}
 
 <div class="error-message">
-    {{ error }}
+
+    <strong>Billing Error</strong>
+
+    <p>
+        {{ error }}
+    </p>
+
 </div>
 
 {% endif %}
@@ -265,6 +271,27 @@ New Bill
 
 </div>
 
+<div id="customPopup" class="custom-popup hidden">
+
+    <div class="custom-popup-box">
+
+        <h3 id="popupTitle">
+            Notice
+        </h3>
+
+        <p id="popupMessage"></p>
+
+        <button
+            type="button"
+            class="primary-button"
+            onclick="closePopup()"
+        >
+            OK
+        </button>
+
+    </div>
+
+</div>
 
 <script
     src="{{ url_for('static', filename='js/billing.js') }}">

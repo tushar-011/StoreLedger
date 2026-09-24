@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add Wallet Balance | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Add Wallet Balance
+{% endblock %}
+
+{% block content %}
+
+<div class="form-card">
+
+    <h3>
+        {{ customer.customer_name }}
+    </h3>
+
+    <p>
+        Current Balance:
+        <strong>
+            ₹{{ customer.wallet_balance }}
+        </strong>
+    </p>
+
+    <br>
+
+    <form method="POST">
+
+        <div class="form-group">
+
+            <label>
+                Amount to Add
+            </label>
+
+            <input
+                type="number"
+                name="amount"
+                min="1"
+                step="0.01"
+                required
+            >
+
+        </div>
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                class="primary-button"
+            >
+                Add Money
+            </button>
+
+            <a
+                href="{{ url_for('customers') }}"
+                class="secondary-button"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

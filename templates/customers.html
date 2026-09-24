@@ -90,7 +90,14 @@ Customers
                     >
                         Edit
                     </a>
-
+                    
+                    <a
+                        href="{{ url_for('add_wallet_balance', customer_id=customer.customer_id) }}"
+                        class="secondary-button"
+                    >
+                        Wallet
+                    </a>
+                    
                     <form
                         method="POST"
                         action="{{ url_for('delete_customer', customer_id=customer.customer_id) }}"
