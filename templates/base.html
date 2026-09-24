@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}StoreLedger{% endblock %}</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+
+            <div class="brand">
+                StoreLedger
+            </div>
+
+            <nav class="nav-menu">
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="#">New Bill</a>
+                <a href="#">Products</a>
+                <a href="#">Inventory</a>
+                <a href="#">Customers</a>
+                <a href="#">Transactions</a>
+                <a href="#">Bill History</a>
+                <a href="#">Reports</a>
+                <a href="#">Audit Logs</a>
+            </nav>
+
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <h2>{% block page_title %}{% endblock %}</h2>
+
+                <div class="topbar-user">
+                    Admin
+                </div>
+            </header>
+
+            <section class="page-content">
+                {% block content %}
+                {% endblock %}
+            </section>
+
+        </main>
+
+    </div>
+
+</body>
+</html>

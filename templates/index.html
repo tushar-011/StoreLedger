@@ -11,23 +11,22 @@
         href="{{ url_for('static', filename='css/style.css') }}"
     >
 </head>
-<body>
 
-    <main class="container">
+<body class="landing-page">
+
+    <main class="landing-container">
+
         <h1>StoreLedger</h1>
 
         <p>
             Smart Billing, Inventory and Transaction Management System
         </p>
 
-        <button id="startButton">
-            Start Billing
-        </button>
-    </main>
+        <a href="{{ url_for('dashboard') }}" class="primary-button">
+            Open StoreLedger
+        </a>
 
-    <script
-        src="{{ url_for('static', filename='js/app.js') }}">
-    </script>
+    </main>
 
 </body>
 </html>

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}
+Dashboard | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Dashboard
+{% endblock %}
+
+
+{% block content %}
+
+<div class="dashboard-grid">
+
+    <div class="dashboard-card">
+        <h3>Total Products</h3>
+        <p>{{ total_products }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Total Customers</h3>
+        <p>{{ total_customers }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Total Orders</h3>
+        <p>{{ total_orders }}</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Low Stock</h3>
+        <p>{{ low_stock }}</p>
+    </div>
+
+</div>
+
+
+<div class="dashboard-section">
+
+    <h3>StoreLedger Overview</h3>
+
+    <p>
+        Manage products, billing, inventory, customers,
+        transactions and database activity from one place.
+    </p>
+
+</div>
+
+{% endblock %}
