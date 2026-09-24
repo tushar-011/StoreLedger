@@ -757,7 +757,22 @@ def new_bill():
                 }
             )
 
-        discount = 0
+        discount_cursor = connection.cursor()
+
+        discount_cursor.execute(
+            """
+            SELECT calculate_discount(%s)
+            """,
+            (subtotal,)
+        )
+
+        discount_result = discount_cursor.fetchone()
+
+        discount = float(
+            discount_result[0] or 0
+        )
+
+        discount_cursor.close()
 
         total_amount = (
             subtotal
