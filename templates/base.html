@@ -1,54 +1,286 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en" data-theme="light">
 
-    <title>{% block title %}StoreLedger{% endblock %}</title>
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}
+        StoreLedger
+        {% endblock %}
+    </title>
 
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='css/style.css') }}"
     >
+
 </head>
 
 <body>
 
-    <div class="app-layout">
+<div
+    id="sidebarOverlay"
+    class="sidebar-overlay"
+    onclick="closeSidebar()"
+></div>
 
-        <aside class="sidebar">
+
+<div class="app-layout">
+
+    <!-- Sidebar -->
+
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
+
+        <div class="sidebar-header">
 
             <div class="brand">
-                StoreLedger
+
+                <div class="brand-icon">
+                    SL
+                </div>
+
+                <div class="brand-text">
+
+                    <strong>
+                        StoreLedger
+                    </strong>
+
+                    <span>
+                        Management System
+                    </span>
+
+                </div>
+
             </div>
 
-            <nav class="nav-menu">
-                <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('new_bill') }}">New Bill</a>
-                <a href="{{ url_for('products') }}">Products</a>
-                <a href="{{ url_for('category_list') }}">Categories</a>
-                <a href="{{ url_for('inventory') }}">Inventory</a>
-                <a href="{{ url_for('customers') }}">Customers</a>
-                <a href="{{ url_for('bill_history') }}">Bill History</a>
-                <a href="{{ url_for('reports') }}">Reports</a>
-                <a href="{{ url_for('audit_logs') }}">Audit Logs</a>
-                <a href="{{ url_for('suppliers') }}">Suppliers</a>
-            </nav>
+            <button
+                type="button"
+                class="sidebar-close"
+                onclick="closeSidebar()"
+                aria-label="Close sidebar"
+            >
+                ×
+            </button>
 
-        </aside>
+        </div>
 
-        <main class="main-content">
 
-            <header class="topbar">
-                <h2>{% block page_title %}{% endblock %}</h2>
+        <nav class="nav-menu">
+
+            <a
+                href="{{ url_for('dashboard') }}"
+                class="{% if request.endpoint == 'dashboard' %}active{% endif %}"
+            >
+                <span class="nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+
+            <a
+                href="{{ url_for('new_bill') }}"
+                class="{% if request.endpoint == 'new_bill' %}active{% endif %}"
+            >
+                <span class="nav-icon">＋</span>
+                <span>New Bill</span>
+            </a>
+
+
+            <div class="nav-section-title">
+                Inventory
+            </div>
+
+
+            <a
+                href="{{ url_for('products') }}"
+                class="{% if request.endpoint in ['products', 'add_product', 'edit_product'] %}active{% endif %}"
+            >
+                <span class="nav-icon">□</span>
+                <span>Products</span>
+            </a>
+
+
+            <a
+                href="{{ url_for('category_list') }}"
+                class="{% if request.endpoint in ['category_list', 'add_category', 'edit_category'] %}active{% endif %}"
+            >
+                <span class="nav-icon">▦</span>
+                <span>Categories</span>
+            </a>
+
+
+            <a
+                href="{{ url_for('inventory') }}"
+                class="{% if request.endpoint in ['inventory', 'low_stock', 'expiry_products', 'restock_product'] %}active{% endif %}"
+            >
+                <span class="nav-icon">▣</span>
+                <span>Inventory</span>
+            </a>
+
+
+            <a
+                href="{{ url_for('suppliers') }}"
+                class="{% if request.endpoint in ['suppliers', 'add_supplier', 'edit_supplier'] %}active{% endif %}"
+            >
+                <span class="nav-icon">◇</span>
+                <span>Suppliers</span>
+            </a>
+
+
+            <div class="nav-section-title">
+                Sales
+            </div>
+
+
+            <a
+                href="{{ url_for('customers') }}"
+                class="{% if request.endpoint in ['customers', 'add_customer', 'edit_customer', 'customer_details'] %}active{% endif %}"
+            >
+                <span class="nav-icon">♙</span>
+                <span>Customers</span>
+            </a>
+
+
+            <a
+                href="{{ url_for('bill_history') }}"
+                class="{% if request.endpoint in ['bill_history', 'view_bill'] %}active{% endif %}"
+            >
+                <span class="nav-icon">▤</span>
+                <span>Bill History</span>
+            </a>
+
+
+            <a
+                href="{{ url_for('reports') }}"
+                class="{% if request.endpoint in ['reports', 'category_report'] %}active{% endif %}"
+            >
+                <span class="nav-icon">⌁</span>
+                <span>Reports</span>
+            </a>
+
+
+            <div class="nav-section-title">
+                System
+            </div>
+
+
+            <a
+                href="{{ url_for('audit_logs') }}"
+                class="{% if request.endpoint == 'audit_logs' %}active{% endif %}"
+            >
+                <span class="nav-icon">≡</span>
+                <span>Audit Logs</span>
+            </a>
+
+        </nav>
+
+
+        {% if session.get("username") %}
+
+        <div class="sidebar-user">
+
+            <div class="user-avatar">
+                {{ session.get("username")[0]|upper }}
+            </div>
+
+            <div class="sidebar-user-info">
+
+                <strong>
+                    {{ session.get("username") }}
+                </strong>
+
+                <span>
+                    {{ session.get("role", "user")|capitalize }}
+                </span>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </aside>
+
+
+    <!-- Main -->
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button
+                    type="button"
+                    class="mobile-menu-button"
+                    onclick="openSidebar()"
+                    aria-label="Open sidebar"
+                >
+                    ☰
+                </button>
+
+                <div>
+
+                    <h2>
+                        {% block page_title %}
+                        StoreLedger
+                        {% endblock %}
+                    </h2>
+
+                    <p class="topbar-subtitle">
+                        Manage your store efficiently
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="topbar-actions">
+
+                <!-- Dark Mode -->
+
+                <button
+                    type="button"
+                    class="theme-toggle"
+                    id="themeToggle"
+                    onclick="toggleTheme()"
+                    aria-label="Toggle dark mode"
+                >
+                    <span id="themeIcon">
+                        ☾
+                    </span>
+                </button>
+
 
                 {% if session.get("username") %}
 
                 <div class="user-menu">
 
-                    <span>
-                        {{ session.get("username") }}
-                    </span>
+                    <div class="topbar-user-avatar">
+                        {{ session.get("username")[0]|upper }}
+                    </div>
+
+                    <div class="topbar-user-details">
+
+                        <strong>
+                            {{ session.get("username") }}
+                        </strong>
+
+                        <span>
+                            {{ session.get("role", "user")|capitalize }}
+                        </span>
+
+                    </div>
 
                     <a
                         href="{{ url_for('logout') }}"
@@ -60,16 +292,138 @@
                 </div>
 
                 {% endif %}
-            </header>
 
-            <section class="page-content">
-                {% block content %}
-                {% endblock %}
-            </section>
+            </div>
 
-        </main>
+        </header>
 
-    </div>
+
+        <section class="page-content">
+
+            {% block content %}
+            {% endblock %}
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+    const html = document.documentElement;
+
+    const savedTheme =
+        localStorage.getItem("storeledger-theme");
+
+    if (savedTheme) {
+
+        html.setAttribute(
+            "data-theme",
+            savedTheme
+        );
+
+    } else {
+
+        const prefersDark =
+            window.matchMedia(
+                "(prefers-color-scheme: dark)"
+            ).matches;
+
+        html.setAttribute(
+            "data-theme",
+            prefersDark
+                ? "dark"
+                : "light"
+        );
+
+    }
+
+
+    function updateThemeIcon() {
+
+        const theme =
+            html.getAttribute("data-theme");
+
+        const icon =
+            document.getElementById(
+                "themeIcon"
+            );
+
+        if (!icon) {
+            return;
+        }
+
+        icon.textContent =
+            theme === "dark"
+                ? "☀"
+                : "☾";
+    }
+
+
+    function toggleTheme() {
+
+        const currentTheme =
+            html.getAttribute(
+                "data-theme"
+            );
+
+        const newTheme =
+            currentTheme === "dark"
+                ? "light"
+                : "dark";
+
+        html.setAttribute(
+            "data-theme",
+            newTheme
+        );
+
+        localStorage.setItem(
+            "storeledger-theme",
+            newTheme
+        );
+
+        updateThemeIcon();
+    }
+
+
+    function openSidebar() {
+
+        document
+            .getElementById("sidebar")
+            .classList.add("open");
+
+        document
+            .getElementById(
+                "sidebarOverlay"
+            )
+            .classList.add("show");
+    }
+
+
+    function closeSidebar() {
+
+        document
+            .getElementById("sidebar")
+            .classList.remove("open");
+
+        document
+            .getElementById(
+                "sidebarOverlay"
+            )
+            .classList.remove("show");
+    }
+
+
+    updateThemeIcon();
+
+</script>
+
+
+{% block scripts %}
+{% endblock %}
 
 </body>
+
 </html>
