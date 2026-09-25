@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}
+Category Report | StoreLedger
+{% endblock %}
+
+{% block page_title %}
+Category-wise Report
+{% endblock %}
+
+{% block content %}
+
+<div class="page-actions">
+
+    <a
+        href="{{ url_for('category_list') }}"
+        class="secondary-button"
+    >
+        Manage Categories
+    </a>
+
+</div>
+
+
+<div class="table-card">
+
+    <table class="data-table">
+
+        <thead>
+
+            <tr>
+                <th>Category</th>
+                <th>Products</th>
+                <th>Stock Units</th>
+                <th>Inventory Value</th>
+                <th>Units Sold</th>
+                <th>Sales Revenue</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for category in categories %}
+
+            <tr>
+
+                <td>
+                    {{ category.category_name }}
+                </td>
+
+                <td>
+                    {{ category.product_count }}
+                </td>
+
+                <td>
+                    {{ category.total_stock }}
+                </td>
+
+                <td>
+                    ₹{{ "%.2f"|format(
+                        category.inventory_value
+                    ) }}
+                </td>
+
+                <td>
+                    {{ category.units_sold }}
+                </td>
+
+                <td>
+                    ₹{{ "%.2f"|format(
+                        category.sales_revenue
+                    ) }}
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+
+                <td
+                    colspan="6"
+                    class="empty-table"
+                >
+                    No category data available.
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

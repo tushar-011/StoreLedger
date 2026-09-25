@@ -5,7 +5,8 @@ from flask import(
     request, 
     redirect, 
     url_for, 
-    Response
+    Response,
+    jsonify
 )
 import mysql.connector
 from db import get_db_connection
@@ -36,22 +37,6 @@ def database_test():
 
     except Exception as error:
         return f"Database connection failed: {error}"
-
-
-@app.route("/categories")
-def categories():
-    connection = get_db_connection()
-
-    cursor = connection.cursor(dictionary=True)
-
-    cursor.execute("SELECT * FROM categories")
-
-    category_data = cursor.fetchall()
-
-    cursor.close()
-    connection.close()
-
-    return category_data
 
 @app.route("/dashboard")
 def dashboard():
@@ -1925,6 +1910,361 @@ def delete_supplier(supplier_id):
 
     return redirect(
         url_for("suppliers")
+    )
+    
+@app.route("/api/categories")
+def categories_api():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT
+            category_id,
+            category_name
+        FROM categories
+        ORDER BY category_name
+        """
+    )
+
+    categories = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(categories)
+
+@app.route("/categories")
+def category_list():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT
+            c.category_id,
+            c.category_name,
+            COUNT(p.product_id) AS product_count
+        FROM categories c
+
+        LEFT JOIN products p
+            ON c.category_id = p.category_id
+
+        GROUP BY
+            c.category_id,
+            c.category_name
+
+        ORDER BY c.category_name
+        """
+    )
+
+    category_data = cursor.fetchall()
+
+    error = request.args.get("error")
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "categories.html",
+        categories=category_data,
+        error=error
+    )
+    
+@app.route("/categories/add", methods=["GET", "POST"])
+def add_category():
+
+    if request.method == "POST":
+
+        category_name = request.form["category_name"].strip()
+
+        if not category_name:
+            return render_template(
+                "add_category.html",
+                error="Category name is required."
+            )
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        try:
+
+            cursor.execute(
+                """
+                INSERT INTO categories
+                (
+                    category_name
+                )
+                VALUES (%s)
+                """,
+                (category_name,)
+            )
+
+            connection.commit()
+
+        except mysql.connector.IntegrityError:
+
+            cursor.close()
+            connection.close()
+
+            return render_template(
+                "add_category.html",
+                error="Category already exists."
+            )
+
+        cursor.close()
+        connection.close()
+
+        return redirect(
+            url_for("category_list")
+        )
+
+    return render_template(
+        "add_category.html"
+    )
+    
+@app.route(
+    "/categories/edit/<int:category_id>",
+    methods=["GET", "POST"]
+)
+def edit_category(category_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    if request.method == "POST":
+
+        category_name = request.form["category_name"].strip()
+
+        if not category_name:
+
+            cursor.close()
+            connection.close()
+
+            return render_template(
+                "edit_category.html",
+                category={
+                    "category_id": category_id,
+                    "category_name": category_name
+                },
+                error="Category name is required."
+            )
+
+        try:
+
+            update_cursor = connection.cursor()
+
+            update_cursor.execute(
+                """
+                UPDATE categories
+                SET category_name = %s
+                WHERE category_id = %s
+                """,
+                (
+                    category_name,
+                    category_id
+                )
+            )
+
+            connection.commit()
+
+            update_cursor.close()
+
+        except mysql.connector.IntegrityError:
+
+            cursor.close()
+            connection.close()
+
+            return render_template(
+                "edit_category.html",
+                category={
+                    "category_id": category_id,
+                    "category_name": category_name
+                },
+                error="Another category already has this name."
+            )
+
+        cursor.close()
+        connection.close()
+
+        return redirect(
+            url_for("category_list")
+        )
+
+    cursor.execute(
+        """
+        SELECT
+            category_id,
+            category_name
+        FROM categories
+        WHERE category_id = %s
+        """,
+        (category_id,)
+    )
+
+    category = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if not category:
+        return "Category not found.", 404
+
+    return render_template(
+        "edit_category.html",
+        category=category
+    )
+    
+@app.route(
+    "/categories/delete/<int:category_id>",
+    methods=["POST"]
+)
+def delete_category(category_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM products
+        WHERE category_id = %s
+        """,
+        (category_id,)
+    )
+
+    product_count = cursor.fetchone()["total"]
+
+    if product_count > 0:
+
+        cursor.close()
+        connection.close()
+
+        return redirect(
+            url_for(
+                "category_list",
+                error=(
+                    "Category cannot be deleted "
+                    "because products are using it."
+                )
+            )
+        )
+
+    delete_cursor = connection.cursor()
+
+    delete_cursor.execute(
+        """
+        DELETE FROM categories
+        WHERE category_id = %s
+        """,
+        (category_id,)
+    )
+
+    connection.commit()
+
+    delete_cursor.close()
+    cursor.close()
+    connection.close()
+
+    return redirect(
+        url_for("category_list")
+    )
+    
+@app.route("/reports/categories")
+def category_report():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT
+            c.category_id,
+            c.category_name,
+
+            COALESCE(
+                product_stats.product_count,
+                0
+            ) AS product_count,
+
+            COALESCE(
+                product_stats.total_stock,
+                0
+            ) AS total_stock,
+
+            COALESCE(
+                product_stats.inventory_value,
+                0
+            ) AS inventory_value,
+
+            COALESCE(
+                sales_stats.units_sold,
+                0
+            ) AS units_sold,
+
+            COALESCE(
+                sales_stats.sales_revenue,
+                0
+            ) AS sales_revenue
+
+        FROM categories c
+
+        LEFT JOIN
+        (
+            SELECT
+                category_id,
+                COUNT(*) AS product_count,
+                SUM(stock) AS total_stock,
+                SUM(stock * price) AS inventory_value
+            FROM products
+            GROUP BY category_id
+        ) AS product_stats
+
+            ON c.category_id =
+               product_stats.category_id
+
+        LEFT JOIN
+        (
+            SELECT
+                p.category_id,
+                SUM(oi.quantity) AS units_sold,
+                SUM(
+                    oi.quantity * oi.price
+                ) AS sales_revenue
+
+            FROM order_items oi
+
+            JOIN products p
+                ON oi.product_id = p.product_id
+
+            JOIN orders o
+                ON oi.order_id = o.order_id
+
+            WHERE o.status = 'completed'
+
+            GROUP BY p.category_id
+
+        ) AS sales_stats
+
+            ON c.category_id =
+               sales_stats.category_id
+
+        ORDER BY
+            sales_revenue DESC,
+            c.category_name ASC
+        """
+    )
+
+    report_data = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "category_report.html",
+        categories=report_data
     )
     
 
