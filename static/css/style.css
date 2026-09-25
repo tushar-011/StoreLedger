@@ -679,3 +679,57 @@ button.primary-button {
     font-weight: bold;
 }
 
+.login-page {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f6f8;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+}
+
+.login-card {
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.login-card h1 {
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.login-card p {
+    margin-top: 0;
+    margin-bottom: 25px;
+    color: #6b7280;
+}
+
+.login-button {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logout-link {
+    text-decoration: none;
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.logout-link:hover {
+    text-decoration: underline;
+}
+

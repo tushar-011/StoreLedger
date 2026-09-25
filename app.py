@@ -1,4 +1,5 @@
 import json
+import os
 from flask import(
     Flask, 
     render_template, 
@@ -6,14 +7,27 @@ from flask import(
     redirect, 
     url_for, 
     Response,
-    jsonify
+    jsonify,
+    session
 )
 import mysql.connector
 from db import get_db_connection
 
+from dotenv import load_dotenv
+
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
+
+load_dotenv()
 
 app = Flask(__name__)
 
+app.secret_key = os.getenv(
+    "SECRET_KEY",
+    "storeledger-development-key"
+)
 
 @app.route("/")
 def home():
@@ -2267,6 +2281,108 @@ def category_report():
         categories=report_data
     )
     
+@app.route("/login", methods=["GET", "POST"])
+def login():
 
+    if "user_id" in session:
+        return redirect(
+            url_for("dashboard")
+        )
+
+    error = None
+
+    if request.method == "POST":
+
+        username = request.form[
+            "username"
+        ].strip()
+
+        password = request.form[
+            "password"
+        ]
+
+        connection = get_db_connection()
+        cursor = connection.cursor(
+            dictionary=True
+        )
+
+        cursor.execute(
+            """
+            SELECT
+                user_id,
+                username,
+                password,
+                role
+            FROM users
+            WHERE username = %s
+            """,
+            (username,)
+        )
+
+        user = cursor.fetchone()
+
+        cursor.close()
+        connection.close()
+
+        if (
+            user
+            and check_password_hash(
+                user["password"],
+                password
+            )
+        ):
+
+            session["user_id"] = (
+                user["user_id"]
+            )
+
+            session["username"] = (
+                user["username"]
+            )
+
+            session["role"] = (
+                user["role"]
+            )
+
+            return redirect(
+                url_for("dashboard")
+            )
+
+        error = (
+            "Invalid username or password."
+        )
+
+    return render_template(
+        "login.html",
+        error=error
+    )
+    
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect(
+        url_for("login")
+    )
+    
+@app.before_request
+def require_login():
+
+    allowed_routes = {
+        "login",
+        "static"
+    }
+
+    if (
+        request.endpoint
+        and request.endpoint not in allowed_routes
+        and "user_id" not in session
+    ):
+        return redirect(
+            url_for("login")
+        )
+        
+    
 if __name__ == "__main__":
     app.run(debug=True)

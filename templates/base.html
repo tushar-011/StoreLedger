@@ -42,9 +42,24 @@
             <header class="topbar">
                 <h2>{% block page_title %}{% endblock %}</h2>
 
-                <div class="topbar-user">
-                    Admin
+                {% if session.get("username") %}
+
+                <div class="user-menu">
+
+                    <span>
+                        {{ session.get("username") }}
+                    </span>
+
+                    <a
+                        href="{{ url_for('logout') }}"
+                        class="logout-link"
+                    >
+                        Logout
+                    </a>
+
                 </div>
+
+                {% endif %}
             </header>
 
             <section class="page-content">
